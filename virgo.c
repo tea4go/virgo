@@ -1,4 +1,4 @@
-#define WIN32_LEAN_AND_MEAN
+﻿#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <shellapi.h>
 
@@ -176,8 +176,7 @@ static unsigned is_valid_window(HWND hwnd)
 static void register_hotkey(unsigned id, unsigned mod, unsigned vk)
 {
 	if (!RegisterHotKey(NULL, id, mod, vk)) {
-		MessageBox(NULL, "could not register hotkey", "error",
-				   MB_ICONEXCLAMATION);
+		MessageBox(NULL, "Could not register hotkey.", "Error", MB_ICONEXCLAMATION);
 		ExitProcess(1);
 	}
 }
@@ -234,7 +233,6 @@ static void virgo_toggle_hotkeys(Virgo *v)
 	if (v->handle_hotkeys) {
 		for (i = 0; i < NUM_DESKTOPS; i++) {
 			register_hotkey(i * 2,   MOD_NOREPEAT, i +0x78);
-			// register_hotkey(i * 2,  MOD_ALT| MOD_NOREPEAT, i + 0x78);	//ALT+F9版本
 			register_hotkey(i * 2 + 1, MOD_CONTROL | MOD_NOREPEAT, i +0x78);
 		}
 	} else {
@@ -251,13 +249,12 @@ static void virgo_init(Virgo *v)
 	v->handle_hotkeys = 1;
 	for (i = 0; i < NUM_DESKTOPS; i++) {
 		register_hotkey(i * 2,   MOD_NOREPEAT, i + 0x78);
-		// register_hotkey(i * 2,  MOD_ALT| MOD_NOREPEAT, i + 0x78);	////ALT+F9版本
 		register_hotkey(i * 2 + 1, MOD_CONTROL | MOD_NOREPEAT, i +0x78);
 	}
-	register_hotkey(i * 2, MOD_ALT | MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT,
-					'Q');
-	register_hotkey(i * 2 + 1, MOD_ALT | MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT,
-					'S');
+	register_hotkey(i * 2, MOD_ALT | MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT,'Q');
+	register_hotkey(i * 2 + 1, MOD_ALT | MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT,'S');
+	register_hotkey(i * 2 + 2, MOD_WIN | MOD_CONTROL | MOD_NOREPEAT,VK_LEFT);
+	register_hotkey(i * 2 + 3, MOD_WIN | MOD_CONTROL | MOD_NOREPEAT,VK_RIGHT);
 	trayicon_init(&v->trayicon);
 }
 
@@ -287,6 +284,30 @@ static void virgo_move_to_desk(Virgo *v, unsigned desk)
 	ShowWindow(hwnd, SW_HIDE);
 }
 
+static void virgo_go_to_up_desk(Virgo *v)
+{
+	if (v->current <=0) {
+		return;
+	}
+	virgo_update(v);
+	windows_hide(&v->desktops[v->current]);
+	windows_show(&v->desktops[v->current-1]);
+	v->current--;
+	trayicon_set(&v->trayicon, v->current + 1);
+}
+
+static void virgo_go_to_next_desk(Virgo *v)
+{
+	if (v->current+1 >= NUM_DESKTOPS ) {
+		return;
+	}
+	virgo_update(v);
+	windows_hide(&v->desktops[v->current]);
+	windows_show(&v->desktops[v->current+1]);
+	v->current++;
+	trayicon_set(&v->trayicon, v->current + 1);
+}
+
 static void virgo_go_to_desk(Virgo *v, unsigned desk)
 {
 	if (v->current == desk) {
@@ -314,6 +335,10 @@ void __main(void)
 		}
 		if (msg.wParam == NUM_DESKTOPS * 2 + 1) {
 			virgo_toggle_hotkeys(&v);
+		} else if (msg.wParam == NUM_DESKTOPS * 2 + 2) {
+			virgo_go_to_up_desk(&v);
+        } else if (msg.wParam == NUM_DESKTOPS * 2 + 3) {
+			virgo_go_to_next_desk(&v);
 		} else if (msg.wParam % 2 == 0) {
 			virgo_go_to_desk(&v, msg.wParam / 2);
 		} else {
