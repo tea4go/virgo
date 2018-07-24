@@ -1,4 +1,4 @@
-﻿#define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <shellapi.h>
 
@@ -242,22 +242,6 @@ static void virgo_toggle_hotkeys(Virgo *v)
 		}
 	}
 }
-
-static void virgo_init(Virgo *v)
-{
-	unsigned i;
-	v->handle_hotkeys = 1;
-	for (i = 0; i < NUM_DESKTOPS; i++) {
-		register_hotkey(i * 2,   MOD_NOREPEAT, i + 0x78);
-		register_hotkey(i * 2 + 1, MOD_CONTROL | MOD_NOREPEAT, i +0x78);
-	}
-	register_hotkey(i * 2, MOD_ALT | MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT,'Q');
-	register_hotkey(i * 2 + 1, MOD_ALT | MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT,'S');
-	register_hotkey(i * 2 + 2, MOD_WIN | MOD_CONTROL | MOD_NOREPEAT,VK_LEFT);
-	register_hotkey(i * 2 + 3, MOD_WIN | MOD_CONTROL | MOD_NOREPEAT,VK_RIGHT);
-	trayicon_init(&v->trayicon);
-}
-
 static void virgo_deinit(Virgo *v)
 {
 	unsigned i;
@@ -318,6 +302,21 @@ static void virgo_go_to_desk(Virgo *v, unsigned desk)
 	windows_show(&v->desktops[desk]);
 	v->current = desk;
 	trayicon_set(&v->trayicon, v->current + 1);
+}
+
+static void virgo_init(Virgo *v)
+{
+	unsigned i;
+	v->handle_hotkeys = 1;
+	for (i = 0; i < NUM_DESKTOPS; i++) {
+		register_hotkey(i * 2,     MOD_CONTROL | MOD_WIN | MOD_NOREPEAT, i + 0x78);
+		register_hotkey(i * 2 + 1, MOD_CONTROL | MOD_WIN | MOD_SHIFT | MOD_NOREPEAT, i + 0x78);
+	}
+	register_hotkey(i * 2,     MOD_WIN | MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT,'Q');
+	register_hotkey(i * 2 + 1, MOD_WIN | MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT,'S');
+	register_hotkey(i * 2 + 2, MOD_WIN | MOD_CONTROL | MOD_NOREPEAT,VK_LEFT);
+	register_hotkey(i * 2 + 3, MOD_WIN | MOD_CONTROL | MOD_NOREPEAT,VK_RIGHT);
+	trayicon_init(&v->trayicon);
 }
 
 void __main(void) __asm__("__main");
